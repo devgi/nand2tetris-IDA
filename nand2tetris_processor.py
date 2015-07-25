@@ -6,28 +6,27 @@ from idaapi import (processor_t, get_16bit, cvar,
                     ASD_DECF0, ASH_HEXF3, ASO_OCTF4, ASB_BINF3, AS_ASCIIC,
                     AS_ASCIIZ, o_void, o_reg, o_imm, dt_byte)
 
-PREDEFINED_SYMBOLS = dict(
-    SP=0,
-    LCL=1,
-    ARG=2,
-    THIS=3,
-    THAT=4,
+PREDEFINED_RAM_LOCATIONS = {
+    0 : "SP",
+    1 : "LCL",
+    2 : "ARG",
+    3 : "THIS",
+    4 : "THAT",
 
-    R5=5,
-    R6=6,
-    R7=7,
-    R8=8,
-    R9=9,
-    R10=10,
-    R11=11,
-    R12=12,
-    R13=13,
-    R14=14,
-    R15=15,
-
-    SCREEN=0x4000,
-    KBD=0x6000
-)
+    5 : "R5",
+    6 : "R6",
+    7 : "R7",
+    8 : "R8",
+    9 : "R9",
+    10 : "R10",
+    11 : "R11",
+    12 : "R12",
+    13 : "R13",
+    14 : "R14",
+    15 : "R15",
+    0x4000 : "SCREEN",
+    0x6000 : "KBD"
+}
 
 REG_A = "A"
 REG_D = "D"
@@ -330,7 +329,6 @@ class HackProcessor(processor_t):
         return True
 
     def ana(self):
-        return 0
         cmd = self.cmd
 
         # Since we set the byte size to be 16 bit.
@@ -383,13 +381,26 @@ class HackProcessor(processor_t):
 
 
     def out(self):
-        return
         buf = idaapi.init_output_buffer(1024)
-        instruction = all_instructions[self.cmd.itype]
-        idaapi.MakeLine(instruction.mnemonic)
+        idaapi.OutMnem()
+
+        # instruction = all_instructions[self.cmd.itype]
+        # print instruction.mnemonic
+        # idaapi.OutValue(instruction.mnemonic)
+        #
+        for i in xrange(0, 6):
+            if self.cmd[i].type == o_void:
+                break
+            idaapi.out_one_operand(i)
+
+        idaapi.term_output_buffer()
+        idaapi.MakeLine(buf)
 
     def outop(self, op):
-        return  True
+        if op.type == o_imm:
+            idaapi.OutLong(op.value, 10)
+            return True
+        return False
 
 
 def PROCESSOR_ENTRY():
